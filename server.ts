@@ -126,7 +126,7 @@ Generate the output using strict JSON format as specified.`;
       let response;
       try {
         response = await ai.models.generateContent({
-          model: "gemini-1.5-flash",
+          model: "gemini-1.5-flash-002",
           contents: prompt,
           config: {
             responseMimeType: "application/json",
@@ -137,7 +137,7 @@ Generate the output using strict JSON format as specified.`;
         if (apiError?.status === 503 || apiError?.message?.includes("503") || apiError?.message?.includes("UNAVAILABLE")) {
           console.warn("Model high demand (503). Retrying...");
           response = await ai.models.generateContent({
-            model: "gemini-1.5-flash",
+            model: "gemini-1.5-flash-002",
             contents: prompt,
             config: {
               responseMimeType: "application/json",
