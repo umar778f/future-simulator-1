@@ -125,7 +125,7 @@ Generate the output using strict JSON format as specified. No markdown formattin
       let response;
       try {
         response = await ai.models.generateContent({
-          model: "gemini-2.5-flash",
+          model: "gemini-flash-latest",
           contents: prompt,
           config: {
             responseMimeType: "application/json",
@@ -134,9 +134,9 @@ Generate the output using strict JSON format as specified. No markdown formattin
         });
       } catch (apiError: any) {
         if (apiError?.status === 503 || apiError?.message?.includes("503") || apiError?.message?.includes("UNAVAILABLE")) {
-          console.warn("Model high demand (503). Retrying with gemini-1.5-flash...");
+          console.warn("Model high demand (503). Retrying with gemini-flash-latest...");
           response = await ai.models.generateContent({
-            model: "gemini-1.5-flash",
+            model: "gemini-flash-latest",
             contents: prompt,
             config: {
               responseMimeType: "application/json",
