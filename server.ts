@@ -11,7 +11,6 @@ const __dirname = path.dirname(__filename);
 async function startServer() {
   const app = express();
   
-  // ✅ FIXED: Wrapped in parseInt so TypeScript knows it is strictly a number
   const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
   app.use(cors({
@@ -20,9 +19,13 @@ async function startServer() {
         'http://localhost:3000',                 
         'http://localhost:5173'                  
     ],
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],  // ✅ Added OPTIONS
+    allowedHeaders: ['Content-Type', 'Authorization'],      // ✅ Added this
     credentials: true
   }));
+
+  // ✅ Handle preflight requests
+  app.options('*', cors());
 
   app.use(express.json());
 
