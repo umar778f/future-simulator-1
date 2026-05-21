@@ -1,5 +1,6 @@
 import express from "express";
 import path from "path";
+import cors from "cors"; 
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 import { fileURLToPath } from "url";
@@ -9,7 +10,19 @@ const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  
+  // ✅ FIXED: Wrapped in parseInt so TypeScript knows it is strictly a number
+  const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+
+  app.use(cors({
+    origin: [
+        'https://future-simulator-1.vercel.app', 
+        'http://localhost:3000',                 
+        'http://localhost:5173'                  
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true
+  }));
 
   app.use(express.json());
 
@@ -22,7 +35,6 @@ async function startServer() {
         technologies, futureDecision, timeframe 
       } = req.body;
 
-      // Ensure API Key exists
       if (!process.env.GEMINI_API_KEY) {
          return res.status(500).json({ error: "GEMINI_API_KEY not configured on server" });
       }
@@ -153,7 +165,6 @@ Generate the output using strict JSON format as specified. No markdown formattin
     }
   });
 
-  // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -169,7 +180,7 @@ Generate the output using strict JSON format as specified. No markdown formattin
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Server running on port ${PORT}`);
   });
 }
 
