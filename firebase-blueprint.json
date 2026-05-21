@@ -1,0 +1,38 @@
+{
+  "entities": {
+    "Simulation": {
+      "title": "Simulation Result",
+      "description": "Stores user simulations and their output",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "input": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "educationLevel": { "type": "string" },
+            "currentSkills": { "type": "string" },
+            "careerGoals": { "type": "string" },
+            "dailyStudyHours": { "type": "number" },
+            "productivityLevel": { "type": "string" },
+            "consistencyLevel": { "type": "string" },
+            "technologies": { "type": "string" },
+            "futureDecision": { "type": "string" },
+            "timeframe": { "type": "string" }
+          }
+        },
+        "output": {
+          "type": "object"
+        },
+        "createdAt": { "type": "object" }
+      },
+      "required": ["userId", "input", "output", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/simulations/{simulationId}": {
+      "schema": { "$ref": "#/entities/Simulation" },
+      "description": "User specific simulations"
+    }
+  }
+}
