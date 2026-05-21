@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { SimulationRecord, FutureCase } from '../types';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion'; // Using standard framer-motion import (change back to 'motion/react' if using v12+)
 import { AlertTriangle, TrendingUp, TrendingDown, BrainCircuit, ArrowLeft, Loader2, Activity } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 
@@ -14,6 +14,7 @@ export default function ResultsPage() {
 
   useEffect(() => {
     if (!id) return;
+    
     const fetchDoc = async () => {
       try {
         const d = await getDoc(doc(db, 'simulations', id));
@@ -21,16 +22,30 @@ export default function ResultsPage() {
           setData(d.data() as SimulationRecord);
         }
       } catch (e) {
-        console.error(e);
+        console.error("Error fetching simulation:", e);
       } finally {
         setLoading(false);
       }
     };
+    
     fetchDoc();
   }, [id]);
 
-  if (loading) return <div className="flex-1 flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-cyan-500" /></div>;
-  if (!data) return <div className="p-8 text-center text-slate-400">Simulation not found.</div>;
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-cyan-500" />
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="p-8 text-center text-slate-400">
+        Simulation not found.
+      </div>
+    );
+  }
 
   const chartData = [
     { name: 'Best Case', Probability: parseInt(data.output.probabilities.best_case) || 0, fill: '#00f0ff' },
@@ -42,21 +57,23 @@ export default function ResultsPage() {
     <div className="flex-1 overflow-y-auto p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-8">
         <Link to="/dashboard" className="inline-flex items-center space-x-2 text-cyan-400 hover:text-cyan-300 transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-            <span className="font-medium text-sm">New Simulation</span>
+          <ArrowLeft className="w-4 h-4" />
+          <span className="font-medium text-sm">New Simulation</span>
         </Link>
         
         <div className="glass p-6 rounded-2xl border-l-[4px] border-l-cyan-500">
-           <h1 className="text-2xl font-display font-bold text-white mb-2">Synthesis Context: {data.input.futureDecision} over {data.input.timeframe}</h1>
-           <p className="text-slate-400 text-sm">
-             <strong>Base Params:</strong> {data.input.dailyStudyHours}hrs/day | {data.input.productivityLevel} Productivity | {data.input.consistencyLevel} Consistency
-           </p>
+          <h1 className="text-2xl font-display font-bold text-white mb-2">
+            Synthesis Context: {data.input.futureDecision} over {data.input.timeframe}
+          </h1>
+          <p className="text-slate-400 text-sm">
+            <strong>Base Params:</strong> {data.input.dailyStudyHours}hrs/day | {data.input.productivityLevel} Productivity | {data.input.consistencyLevel} Consistency
+          </p>
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-           <ScenarioCard type="best" data={data.output.best_case} prob={data.output.probabilities.best_case} />
-           <ScenarioCard type="average" data={data.output.average_case} prob={data.output.probabilities.average_case} />
-           <ScenarioCard type="worst" data={data.output.worst_case} prob={data.output.probabilities.worst_case} />
+          <ScenarioCard type="best" data={data.output.best_case} prob={data.output.probabilities.best_case} />
+          <ScenarioCard type="average" data={data.output.average_case} prob={data.output.probabilities.average_case} />
+          <ScenarioCard type="worst" data={data.output.worst_case} prob={data.output.probabilities.worst_case} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -95,13 +112,20 @@ export default function ResultsPage() {
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );
 }
 
-function ScenarioCard({ type, data, prob }: { type: 'best'|'average'|'worst', data: FutureCase, prob: string }) {
+// --- Subcomponents ---
+
+interface ScenarioCardProps {
+  type: 'best' | 'average' | 'worst';
+  data: FutureCase;
+  prob: string;
+}
+
+function ScenarioCard({ type, data, prob }: ScenarioCardProps) {
   const styles = {
     best: 'border-t-cyan-400 shadow-[0_-4px_20px_rgba(0,240,255,0.15)] from-cyan-950/40',
     average: 'border-t-purple-400 shadow-[0_-4px_20px_rgba(112,0,255,0.15)] from-purple-950/30',
@@ -114,8 +138,15 @@ function ScenarioCard({ type, data, prob }: { type: 'best'|'average'|'worst', da
     worst: <TrendingDown className="w-5 h-5 text-red-500" />
   };
 
-  // Convert skills and risks to array safely since AI might return strings or weird arrays
-  const parseList = (val: any) => Array.isArray(val) ? val : String(val).split(',').map(s=>s.trim());
+  // Safely parse lists, filtering out empty strings and handling undefined AI outputs
+  const parseList = (val: string | string[] | undefined | null): string[] => {
+    if (!val) return [];
+    if (Array.isArray(val)) return val;
+    return String(val)
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean); // Removes empty strings
+  };
 
   return (
     <motion.div 
@@ -135,7 +166,9 @@ function ScenarioCard({ type, data, prob }: { type: 'best'|'average'|'worst', da
 
       <div className="space-y-4 flex-1">
         <div>
-          <h4 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">{data.title || data.career_status}</h4>
+          <h4 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
+            {data.title || data.career_status}
+          </h4>
           <p className="text-cyan-400 font-mono text-sm mt-1">{data.salary_estimate || 'N/A'}</p>
         </div>
 
@@ -144,8 +177,10 @@ function ScenarioCard({ type, data, prob }: { type: 'best'|'average'|'worst', da
         <div className="pt-4 border-t border-slate-700/50">
           <h5 className="text-xs uppercase tracking-wider text-slate-500 font-bold mb-2">Acquired Assets</h5>
           <div className="flex flex-wrap gap-2">
-            {parseList(data.skills_gained).map((s: string, i: number) => (
-              <span key={i} className="px-2 py-1 text-xs bg-cyan-900/30 text-cyan-300 border border-cyan-800/50 rounded-md">{s}</span>
+            {parseList(data.skills_gained).map((s, i) => (
+              <span key={i} className="px-2 py-1 text-xs bg-cyan-900/30 text-cyan-300 border border-cyan-800/50 rounded-md">
+                {s}
+              </span>
             ))}
           </div>
         </div>
@@ -155,7 +190,7 @@ function ScenarioCard({ type, data, prob }: { type: 'best'|'average'|'worst', da
              <AlertTriangle className="w-3 h-3 text-amber-500" /> Risk Factors
            </h5>
            <ul className="text-xs text-slate-400 space-y-1 list-disc list-inside">
-             {parseList(data.risks).map((r: string, i: number) => (
+             {parseList(data.risks).map((r, i) => (
                <li key={i}>{r}</li>
              ))}
            </ul>
