@@ -40,15 +40,18 @@ export default function DashboardPage() {
     setLoading(true);
     
     try {
-      const res = await fetch('/api/simulate', {
+      // ✅ UPDATED: Now pointing directly to your live Render backend
+      const res = await fetch('https://future-simulator-1.onrender.com/api/simulate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
+      
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.error || "Simulation failed to generate");
       }
+      
       const output: SimulationOutput = await res.json();
       
       const simulationId = crypto.randomUUID();
