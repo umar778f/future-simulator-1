@@ -3,10 +3,8 @@ import path from "path";
 import cors from "cors"; 
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
-import { fileURLToPath } from "url";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
 async function startServer() {
   const app = express();
@@ -26,8 +24,11 @@ async function startServer() {
 
   app.use(cors(corsOptions));
   app.options('*', cors(corsOptions));
-
   app.use(express.json());
+
+  app.get('/ping', (req, res) => {
+    res.json({ status: 'awake' });
+  });
 
   app.post("/api/simulate", async (req, res) => {
     try {
@@ -64,8 +65,8 @@ The user wants to simulate their career future based on these inputs:
 - Timeframe: ${timeframe}
 
 Analyze this data and simulate 3 possible future outcomes (Best case, Average case, Worst case).
-When generating the \`salary_estimate\`, you MUST use US Dollars ($) (e.g., $120,000 per year).
-Generate the output using strict JSON format as specified. No markdown formatting outside of the JSON block if not requested.`;
+When generating the salary_estimate, you MUST use US Dollars ($) (e.g., $120,000 per year).
+Generate the output using strict JSON format as specified.`;
 
       const responseSchema = {
           type: Type.OBJECT,
@@ -134,7 +135,7 @@ Generate the output using strict JSON format as specified. No markdown formattin
         });
       } catch (apiError: any) {
         if (apiError?.status === 503 || apiError?.message?.includes("503") || apiError?.message?.includes("UNAVAILABLE")) {
-          console.warn("Model high demand (503). Retrying with gemini-flash-latest...");
+          console.warn("Model high demand (503). Retrying...");
           response = await ai.models.generateContent({
             model: "gemini-flash-latest",
             contents: prompt,
@@ -177,7 +178,7 @@ Generate the output using strict JSON format as specified. No markdown formattin
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
-    app.get('*all', (req, res) => {
+    app.get('*', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }

@@ -41,7 +41,7 @@ export default function DashboardPage() {
     
     try {
       // ✅ UPDATED: Now pointing directly to your live Render backend
-      const res = await fetch('https://future-simulator-1.onrender.com/api/simulate', {
+      const res = await fetch('https://future-simulator-8.onrender.com/api/simulate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
