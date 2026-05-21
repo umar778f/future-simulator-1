@@ -13,23 +13,22 @@ async function startServer() {
   
   const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
-  app.use(cors({
+  const corsOptions = {
     origin: [
         'https://future-simulator-1.vercel.app', 
         'http://localhost:3000',                 
         'http://localhost:5173'                  
     ],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],  // ✅ Added OPTIONS
-    allowedHeaders: ['Content-Type', 'Authorization'],      // ✅ Added this
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
-  }));
+  };
 
-  // ✅ Handle preflight requests
-  app.options('*', cors());
+  app.use(cors(corsOptions));
+  app.options('*', cors(corsOptions));
 
   app.use(express.json());
 
-  // API Routes
   app.post("/api/simulate", async (req, res) => {
     try {
       const { 
@@ -134,7 +133,7 @@ Generate the output using strict JSON format as specified. No markdown formattin
           }
         });
       } catch (apiError: any) {
-        if (apiError.status === 503 || apiError.message?.includes("503") || apiError.message?.includes("UNAVAILABLE")) {
+        if (apiError?.status === 503 || apiError?.message?.includes("503") || apiError?.message?.includes("UNAVAILABLE")) {
           console.warn("Model high demand (503). Retrying with gemini-1.5-flash...");
           response = await ai.models.generateContent({
             model: "gemini-1.5-flash",
@@ -162,9 +161,10 @@ Generate the output using strict JSON format as specified. No markdown formattin
       }
 
       res.json(data);
+
     } catch (err: any) {
       console.error(err);
-      res.status(500).json({ error: err.message || "Failed to generate simulation" });
+      res.status(500).json({ error: err?.message || "Failed to generate simulation" });
     }
   });
 
